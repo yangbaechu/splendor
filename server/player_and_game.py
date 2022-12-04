@@ -636,7 +636,7 @@ class Game(object):
 
         self.refill()
 
-        return
+        return 
 
     #a는s [가져올 보석 개수, 구매할 카드 행/렬]
     #카드 열 번호는 왼쪽부터 0, 1, ...
