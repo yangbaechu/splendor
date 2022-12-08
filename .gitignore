@@ -3,3 +3,5 @@ activate
 ENV
 *.pyc
 save.json
+__pycache__
+splendor_venv
