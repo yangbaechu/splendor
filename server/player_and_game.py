@@ -14,6 +14,8 @@ COLOR_DICT = {
     'r': 'ruby',
 }
 
+ori_my_cards = [0, 0, 0, 0, 0]
+ori_my_gems = [0, 0, 0, 0, 0]
 class Player(object):
     def __init__(self, game, id, name=None):
         self.id = id
@@ -698,7 +700,7 @@ class Game(object):
                  
                 #정상적 구매를 한 경우
                 if not self.buy(card_to_buy.uuid):
-                    reward += 0.5*((15-player.score())/15)
+                    reward += 3.0*((15-player.score())/15)
                     reward += card_to_buy.points
                     print(f'reward: {reward}')
 
@@ -728,9 +730,17 @@ class Game(object):
         opp_cards = [len(opponent.cards[color]) for color in COLORS]
         opp_gems = [opponent.gems[color] for color in COLORS]
 
+        global ori_my_gems
+        global ori_my_cards
         env_player_state = [my_cards, my_gems, opp_cards, opp_gems]
-        print(env_player_state)
+        
         env_score = [player.score(), opponent.score()]
+        
+        if ori_my_cards!=my_cards or ori_my_gems!=my_gems: # 현재 내 상태 출력
+            print(f"My Cards: {my_cards}| My Gems: {my_gems} My score: {env_score[0]}")
+            ori_my_cards = my_cards
+            ori_my_gems = my_gems
+            
 
         state = {"nobles": env_nobles, 
                  "cards": env_cards, 
@@ -738,8 +748,9 @@ class Game(object):
                  "score": env_score
                  }
         
-        if (player.score() >= 15) or (opponent.score() >= 15):
+        if (player.score() >= 8) or (opponent.score() >= 15): # 학습을 위해 에피소드를 일찍 끝내기 위해 종료 조건 조정
             done = True
+            env_score = [0, 0]
 
         return state, reward, done, False
         

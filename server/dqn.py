@@ -66,7 +66,7 @@ class Agent():
         self.model.load_state_dict(self.model.state_dict())
         self.memory = ReplayBuffer()
         self.optimizer = optim.Adam(self.model.parameters(), lr=learning_rate)
-        self.action = [[1,1,1,0,0, 0,0],
+        self.action = [[1,1,1,0,0, 0,0], # 보석 토큰 가져오기
                        [1,1,0,1,0, 0,0],
                        [1,1,0,0,1, 0,0],
                        [1,0,1,1,0, 0,0],
@@ -81,7 +81,8 @@ class Agent():
                        [0,0,2,0,0, 0,0],
                        [0,0,0,2,0, 0,0],
                        [0,0,0,0,2, 0,0],
-                       [0,0,0,0,0, 1,0],
+                       
+                       [0,0,0,0,0, 1,0], # 개발 카드 구매
                        [0,0,0,0,0, 1,1],
                        [0,0,0,0,0, 1,2],
                        [0,0,0,0,0, 1,3],
@@ -99,10 +100,10 @@ class Agent():
         out = self.model.forward(obs)
         coin = random.random()
         if coin < epsilon:
-            return random.randint(0,26)
+            return random.randint(0,26) # 모든 액션 범위
         else:
-            return random.randint(14,26)
-            # return out.argmax().item()
+            return random.randint(15,26) # 개발 카드 구매 액션 범위
+            # return out.argmax().item() # model layer를 통한 액션
             
     def train(q, q_target, memory, optimizer):
         for i in range(10):
@@ -117,6 +118,7 @@ class Agent():
             optimizer.zero_grad()
             loss.backward()
             optimizer.step()
+        
             
             
 def state2np(state_dict):
@@ -129,7 +131,7 @@ def state2np(state_dict):
 def main():
     GM = GameManager("Aircraft")
     GM.join_game()
-    GM.join_game()
+    # GM.join_game()
     GM.start_game()
     env = GM.game
 
@@ -137,7 +139,7 @@ def main():
     score = 0.0
 
     agent = Agent()
-    
+
     for n_epi in range(2):
         epsilon = max(0.01, 0.08 - 0.01*(n_epi/200)) #Linear annealing from 8% to 1%
         s = env.reset()
@@ -147,7 +149,7 @@ def main():
         
         while not done:
             a = agent.select_action(torch.from_numpy(s).float(), epsilon)
-            print(a)
+            # print(a) # 액션 확인
             s_prime, r, done, info = env.step(agent.action[a])
             s_prime = state2np(s_prime)
             done_mask = 0.0 if done else 1.0
@@ -157,15 +159,17 @@ def main():
             score += r
             if done:
                 break
+            time.sleep(0.01)
+            if agent.memory.size()>2000:
+                agent.train(agent.model, agent.target_model, agent.memory, agent.optimizer)
         print("Done!")
-        if agent.memory.size()>2000:
-            agent.train(agent.model, agent.target_model, agent.memory, agent.optimizer)
-
+        torch.save(agent.model, "./weight/model.pt")
         if n_epi%print_interval==0 and n_epi!=0:
             agent.target_model.load_state_dict(agent.model.state_dict())
             print("n_episode :{}, score : {:.1f}, n_buffer : {}, eps : {:.1f}%".format(
                                                             n_epi, score/print_interval, agent.memory.size(), epsilon*100))
             score = 0.0
+            
     env.close()
 
 if __name__ == '__main__':
