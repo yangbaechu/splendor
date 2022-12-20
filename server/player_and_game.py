@@ -494,7 +494,7 @@ class Game(object):
 
         for level in LEVELS:
             self.cards[level] = []
-            shuffle_deck(self.decks[level])
+            #shuffle_deck(self.decks[level])
             for card in self.decks[level]:
                 card.level = level
         
@@ -631,7 +631,7 @@ class Game(object):
 
         for level in LEVELS:
             self.cards[level] = []
-            shuffle_deck(self.decks[level])
+            #shuffle_deck(self.decks[level])
             for card in self.decks[level]:
                 card.level = level
         
@@ -679,6 +679,30 @@ class Game(object):
 
         return state
 
+    def is_done(self, state_dict):
+        if (state_dict['score'][0] >= 8) or (state_dict['score'][1] >= 15): # 학습을 위해 에피소드를 일찍 끝내기 위해 종료 조건 조정
+            env_score = [0, 0]
+            return True
+
+        if sum(state_dict['player_state'][1]) < 9:
+            return False
+
+        for card_level in range(3): # level
+            for card_order in range(4): # order
+                #카드 구매 조건 확인
+                card = state_dict['cards'][card_level][card_order]
+                my_gems = state_dict['player_state'][1]
+                if card[0] > my_gems[0] or card[1] > my_gems[1] or card[2] > my_gems[2] or card[3] > my_gems[3] or card[4] > my_gems[4]:
+                    pass
+                else: #하나라도 구매 가능할 시
+                    return False
+
+                #구매 가능한 카드 없을 시
+                if card_level == 2 and card_order == 3:
+                    env_score = [0, 0]
+                    return True
+                
+
     #a는s [가져올 보석 개수, 구매할 카드 행/렬]
     #카드 열 번호는 왼쪽부터 0, 1, ...
     def step(self, action): 
@@ -707,7 +731,7 @@ class Game(object):
                 if not self.buy(card_to_buy.uuid):
                     reward += 3.0*((15-player.score())/15)
                     reward += card_to_buy.points
-                    print(f'reward: {reward}')
+                    #print(f'reward: {reward}')
 
                 break
         
@@ -742,8 +766,8 @@ class Game(object):
         
         env_score = [player.score(), opponent.score()]
         
-        if ori_my_cards!=my_cards or ori_my_gems!=my_gems: # 현재 내 상태 출력
-            print(f"My Cards: {my_cards}| My Gems: {my_gems} My score: {env_score[0]}")
+        if ori_my_cards!=my_cards or ori_my_gems!=my_gems: 
+            #print(f"My Cards: {my_cards}| My Gems: {my_gems} My score: {env_score[0]}")
             ori_my_cards = my_cards
             ori_my_gems = my_gems
             
@@ -753,10 +777,8 @@ class Game(object):
                  "player_state": env_player_state, 
                  "score": env_score
                  }
-        
-        if (player.score() >= 8) or (opponent.score() >= 15): # 학습을 위해 에피소드를 일찍 끝내기 위해 종료 조건 조정
-            done = True
-            env_score = [0, 0]
+
+        done = self.is_done(state)
 
         return state, reward, done, False
         

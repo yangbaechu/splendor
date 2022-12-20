@@ -1,1 +1,3 @@
-print([i for i in range(5)])
+import random
+
+print(random.randint(0,-1))

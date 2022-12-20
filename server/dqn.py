@@ -125,14 +125,6 @@ class Agent():
         possible_action_list = self.filter_action(state_dict)
         action_num = random.randint(0, len(possible_action_list) - 1)
 
-        #card, 내정보 확인해보기(test)
-        card_level = self.action[possible_action_list[action_num]][-2] - 1
-        card_order = self.action[possible_action_list[action_num]][-1]
-        card = state_dict['cards'][card_level][card_order]
-        my_gems = state_dict['player_state'][1]
-        print(f'card: {card}')
-        print(f'my_gems: {my_gems}')
-
         return possible_action_list[action_num]
 
     def train(q, q_target, memory, optimizer):
@@ -170,7 +162,7 @@ def main():
 
     agent = Agent()
 
-    for n_epi in range(2):
+    for n_epi in range(100):
         epsilon = max(0.01, 0.08 - 0.01*(n_epi/200)) #Linear annealing from 8% to 1%
         s = env.reset()
         state_dict = s
@@ -180,7 +172,6 @@ def main():
         
         while not done:
             a = agent.select_action(torch.from_numpy(s).float(), epsilon, state_dict)
-            #print(agent.action[a]) # 액션 확인
             s_prime, r, done, info = env.step(agent.action[a])
             state_dict = s_prime
             s_prime = state2np(s_prime)
@@ -190,19 +181,20 @@ def main():
 
             score += r
             if done:
+                print(f"My Cards: {state_dict['player_state'][0]}| My Gems: {state_dict['player_state'][1]} My score: {state_dict['score'][0]}")
                 break
             time.sleep(0.01)
-            if agent.memory.size()>2000:
+            if agent.memory.size()>2000: #학습 시작 시점 빠르게
                 agent.train(agent.model, agent.target_model, agent.memory, agent.optimizer)
         print("Done!")
-        torch.save(agent.model, "./weight/model.pt")
+        #torch.save(agent.model, "./weight/model.pt")
         if n_epi%print_interval==0 and n_epi!=0:
             agent.target_model.load_state_dict(agent.model.state_dict())
             print("n_episode :{}, score : {:.1f}, n_buffer : {}, eps : {:.1f}%".format(
                                                             n_epi, score/print_interval, agent.memory.size(), epsilon*100))
             score = 0.0
             
-    env.close()
+    #env.close()
 
 if __name__ == '__main__':
     main()
