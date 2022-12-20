@@ -91,9 +91,11 @@ class Player(object):
 
     def buy(self, uuid):
         if self.acted:
+            print("You've already used your action")
             return {'error': "You've already used your action"}
-        if self.taken:
-            return {'error': "You've already taken gems, cheater"}
+        #if self.taken:
+            #print("You've already taken gems, cheater")
+            #return {'error': "You've already taken gems, cheater"}
         owed = 0
 
         card = find_uuid(uuid, self.reserved)
@@ -111,6 +113,8 @@ class Player(object):
             if self.power(c) < card.cost[c]:
                 owed += card.cost[c] - self.power(c)
                 if owed > self.gems['*']:
+                    print(card)
+                    print(self.gems)
                     print("Not enough gems")
                     return {'error': 'Not enough gems'}
 
@@ -646,7 +650,8 @@ class Game(object):
         for level in LEVELS:
             cards = []
             for c in self.cards[level]:
-                card = list(c.cost.values())
+                card = [c.cost[key] for key in c_dict.keys()]
+                #card = list(c.cost.values())
                 card.append(c_dict[c.color])
                 card.append(c.points)
                 cards.append(card)
@@ -692,10 +697,10 @@ class Game(object):
 
             #카드 구매
             elif(i==5 and a>0) and a<4 :
-                # print("try to buy card")
+                #print("try to buy card")
                 level = LEVELS[a-1]
                 card_to_buy = self.cards[level][action[6]]
-                # print(f'card_to_buy: {card_to_buy}')
+                #print(f'card_to_buy: {card_to_buy}')
                 reward -= 0.005
                  
                 #정상적 구매를 한 경우
@@ -714,7 +719,8 @@ class Game(object):
         for level in LEVELS:
             cards = []
             for c in self.cards[level]:
-                card = list(c.cost.values())
+                card = [c.cost[key] for key in c_dict.keys()]
+                #card = list(c.cost.values())
                 card.append(c_dict[c.color])
                 card.append(c.points)
                 cards.append(card)

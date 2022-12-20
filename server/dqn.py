@@ -82,7 +82,7 @@ class Agent():
                        [0,0,0,2,0, 0,0],
                        [0,0,0,0,2, 0,0],
                        
-                       [0,0,0,0,0, 1,0], # 개발 카드 구매
+                       [0,0,0,0,0, 1,0], # i = 15 개발 카드 구매
                        [0,0,0,0,0, 1,1],
                        [0,0,0,0,0, 1,2],
                        [0,0,0,0,0, 1,3],
@@ -93,37 +93,48 @@ class Agent():
                        [0,0,0,0,0, 3,0],
                        [0,0,0,0,0, 3,1],
                        [0,0,0,0,0, 3,2],
-                       [0,0,0,0,0, 3,3]]
+                       [0,0,0,0,0, 3,3]] # i = 26
                        
+    def filter_action(self, state_dict):
+        possible_action_list = []
+        
+        # 보석 획득하는 경우
+        if sum(state_dict['player_state'][1]) < 9:
+            for i in range(15):
+                possible_action_list.append(i)
+
+        # 카드 구매하는 경우
+        for i in range(15, 27):
+            card_level = self.action[i][-2] - 1
+            card_order = self.action[i][-1]
+
+            #카드 구매 조건 확인
+            card = state_dict['cards'][card_level][card_order]
+            my_gems = state_dict['player_state'][1]
+
+            #구매 불가능할 경우 action 다시 선택
+            if card[0] > my_gems[0] or card[1] > my_gems[1] or card[2] > my_gems[2] or card[3] > my_gems[3] or card[4] > my_gems[4]:
+                pass
+            else:
+                possible_action_list.append(i)
+        
+        return possible_action_list
         
     def select_action(self, obs, epsilon, state_dict):
         out = self.model.forward(obs)
-        coin = random.random()
-        if coin < epsilon:
-            return random.randint(0,26) # 모든 액션 범위
-        else:
-            action_num = random.randint(15,26) # 개발 카드 구매 액션 범위
+        possible_action_list = self.filter_action(state_dict)
+        action_num = random.randint(0, len(possible_action_list) - 1)
 
-            for i in range(5):
-                card_level = self.action[action_num][-2] - 1
-                card_order = self.action[action_num][-1]
+        #card, 내정보 확인해보기(test)
+        card_level = self.action[possible_action_list[action_num]][-2] - 1
+        card_order = self.action[possible_action_list[action_num]][-1]
+        card = state_dict['cards'][card_level][card_order]
+        my_gems = state_dict['player_state'][1]
+        print(f'card: {card}')
+        print(f'my_gems: {my_gems}')
 
-                #카드 구매 조건 확인
-                card = state_dict['cards'][card_level][card_order]
-                my_gems = state_dict['player_state'][1]
+        return possible_action_list[action_num]
 
-                #구매 불가능할 경우 action 다시 선택
-                if card[0] > my_gems[0] or card[1] > my_gems[1] or card[2] > my_gems[2] or card[3] > my_gems[3] or card[4] > my_gems[4]:
-                    action_num = random.randint(15,26)
-                   # print("action select again!")
-                #구매 가능할 경우 구매
-                else:
-                    return action_num
-
-            #5번 구매 못하면 자원 획득
-            return random.randint(0,14)
-            # return out.argmax().item() # model layer를 통한 액션
-            
     def train(q, q_target, memory, optimizer):
         for i in range(10):
             s,a,r,s_prime,done_mask = memory.sample(batch_size)
@@ -169,7 +180,7 @@ def main():
         
         while not done:
             a = agent.select_action(torch.from_numpy(s).float(), epsilon, state_dict)
-            # print(a) # 액션 확인
+            #print(agent.action[a]) # 액션 확인
             s_prime, r, done, info = env.step(agent.action[a])
             state_dict = s_prime
             s_prime = state2np(s_prime)
