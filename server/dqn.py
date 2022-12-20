@@ -96,13 +96,32 @@ class Agent():
                        [0,0,0,0,0, 3,3]]
                        
         
-    def select_action(self, obs, epsilon):
+    def select_action(self, obs, epsilon, state_dict):
         out = self.model.forward(obs)
         coin = random.random()
         if coin < epsilon:
             return random.randint(0,26) # 모든 액션 범위
         else:
-            return random.randint(15,26) # 개발 카드 구매 액션 범위
+            action_num = random.randint(15,26) # 개발 카드 구매 액션 범위
+
+            for i in range(5):
+                card_level = self.action[action_num][-2] - 1
+                card_order = self.action[action_num][-1]
+
+                #카드 구매 조건 확인
+                card = state_dict['cards'][card_level][card_order]
+                my_gems = state_dict['player_state'][1]
+
+                #구매 불가능할 경우 action 다시 선택
+                if card[0] > my_gems[0] or card[1] > my_gems[1] or card[2] > my_gems[2] or card[3] > my_gems[3] or card[4] > my_gems[4]:
+                    action_num = random.randint(15,26)
+                   # print("action select again!")
+                #구매 가능할 경우 구매
+                else:
+                    return action_num
+
+            #5번 구매 못하면 자원 획득
+            return random.randint(0,14)
             # return out.argmax().item() # model layer를 통한 액션
             
     def train(q, q_target, memory, optimizer):
@@ -143,14 +162,16 @@ def main():
     for n_epi in range(2):
         epsilon = max(0.01, 0.08 - 0.01*(n_epi/200)) #Linear annealing from 8% to 1%
         s = env.reset()
+        state_dict = s
         s = state2np(s)
 
         done = False
         
         while not done:
-            a = agent.select_action(torch.from_numpy(s).float(), epsilon)
+            a = agent.select_action(torch.from_numpy(s).float(), epsilon, state_dict)
             # print(a) # 액션 확인
             s_prime, r, done, info = env.step(agent.action[a])
+            state_dict = s_prime
             s_prime = state2np(s_prime)
             done_mask = 0.0 if done else 1.0
             agent.memory.put((s,a,r/100.0,s_prime, done_mask))
