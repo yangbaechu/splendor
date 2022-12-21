@@ -9,12 +9,13 @@ import torch.optim as optim
 from flask import Flask
 from splendor_env import *
 import numpy as np
+import matplotlib.pyplot as plt
 
 #Hyperparameters
 learning_rate = 0.0005
 gamma         = 0.98
 buffer_limit  = 50000
-batch_size    = 32
+batch_size    = 8
 
 class ReplayBuffer():
     def __init__(self):
@@ -142,7 +143,7 @@ class Agent():
 
 
     def train(self, q, q_target, memory, optimizer):
-        for i in range(10):
+        for i in range(2):
             s,a,r,s_prime,done_mask = memory.sample(batch_size)
             q_out = q(s)
             q_a = q_out.gather(1,a)
@@ -172,13 +173,18 @@ def main():
 
     print_interval = 10
     score = 0.0
+    reward = 0
     average_turn = 0
 
     agent = Agent()
 
-    
-    for n_epi in range(400):
-        epsilon = max(0.01, 0.4 - 0.1*(n_epi/100)) #Linear annealing from 50% to 1%
+    score_list  = []
+    reward_list = []
+    turn_list = []
+    EPISODE = 100
+
+    for n_epi in range(EPISODE):
+        epsilon = max(0.05, 0.5 - 0.1*(n_epi/100)) #Linear annealing from 60% to 5%
         s = env.reset()
         state_dict = s
         s = state2np(s)
@@ -190,7 +196,6 @@ def main():
             turn += 1
             s_tensor = torch.from_numpy(s).float()
             a = agent.select_action(s_tensor, epsilon, state_dict)
-            #print(a)
             s_prime, r, done, info = env.step(agent.action[a])
             state_dict = s_prime
             s_prime = state2np(s_prime)
@@ -198,24 +203,41 @@ def main():
             agent.memory.put((s,a,r/100.0,s_prime, done_mask))
             s = s_prime
 
-            score += r
+            reward += r
             
             if done:
                 #print(f"epi {n_epi} My Cards: {state_dict['player_state'][0]}| My Gems: {state_dict['player_state'][1]} My score: {state_dict['score'][0]} Turn to end: {turn}")
                 average_turn += turn
+                score += state_dict['score'][0]
+                #print(score)
                 turn =  0
                 break
             time.sleep(0.01)
-            if agent.memory.size()>1000: #train 시험용으로 낮춤
+            if agent.memory.size()>100:
                 agent.train(agent.model, agent.target_model, agent.memory, agent.optimizer)
         #print("Done!")
         #torch.save(agent.model, "./weight/model.pt")
         if n_epi%print_interval==0 and n_epi!=0:
             agent.target_model.load_state_dict(agent.model.state_dict())
-            print("n_episode :{}, score : {:.1f}, turn: {:.1f}, n_buffer : {}, eps : {:.1f}%".format(
-                                                            n_epi, score/print_interval, average_turn/print_interval, agent.memory.size(), epsilon*100))
-            score = 0.0
+            print("epi {}, reward : {:.1f}, turn: {:.1f}, score : {}, eps : {:.1f}%".format(
+                                                                 n_epi, reward/print_interval, average_turn/print_interval, score/print_interval, epsilon*100))
+            reward_list.append(reward)
+            score_list.append(score)
+            turn_list.append(average_turn)
+            
+            
+            reward = 0
+            score = 0
             average_turn = 0
+
+    plt.plot([i for i in range(print_interval, EPISODE, print_interval)], reward_list, label = 'reward')
+    plt.plot([i for i in range(print_interval, EPISODE, print_interval)], score_list, label = 'score')
+    plt.plot([i for i in range(print_interval, EPISODE, print_interval)], turn_list, label = 'turn to end')
+
+    plt.title('train result')
+    plt.xlabel('episode')
+    plt.legend()
+    plt.show()
             
     #env.close()
 
