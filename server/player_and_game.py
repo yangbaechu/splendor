@@ -743,6 +743,10 @@ class Game(object):
         
         #리턴할 환경 정보
         env_nobles = [list(noble.requirement.values()) for noble in self.nobles]
+        
+        #귀족카드 가져갔을 때 shape 맞추기
+        for i in range(3 - len(self.nobles)):
+            env_nobles.append([0,0,0,0,0])
 
         env_cards = []
         c_dict = {'b': 0, 'u': 1, 'w': 2, 'g':3, 'r':4}

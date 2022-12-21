@@ -175,6 +175,7 @@ def main():
 
         while not done:
             turn += 1
+            #print(state_dict)
             a = agent.select_action(torch.from_numpy(s).float(), epsilon, state_dict)
             s_prime, r, done, info = env.step(agent.action[a])
             state_dict = s_prime
@@ -186,7 +187,7 @@ def main():
             score += r
             
             if done:
-                print(f"My Cards: {state_dict['player_state'][0]}| My Gems: {state_dict['player_state'][1]} My score: {state_dict['score'][0]} Turn to end: {turn}")
+                print(f"epi {n_epi} My Cards: {state_dict['player_state'][0]}| My Gems: {state_dict['player_state'][1]} My score: {state_dict['score'][0]} Turn to end: {turn}")
                 average_turn += turn
                 turn =  0
                 break
