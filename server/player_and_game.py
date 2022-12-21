@@ -58,6 +58,8 @@ class Player(object):
             'r': 0,
             '*': 0,
         }
+        self.nobles = []
+
 
     def dict(self):
         cards = {}
@@ -637,7 +639,10 @@ class Game(object):
                 card.level = level
         
         for player in self.players[:self.num_players]:
+            
             player.reset()
+            my_cards = [len(player.cards[color]) for color in COLORS]
+            my_gems = [player.gems[color] for color in COLORS]
 
         self.updated_at = time.time()
 
@@ -652,7 +657,6 @@ class Game(object):
             cards = []
             for c in self.cards[level]:
                 card = [c.cost[key] for key in c_dict.keys()]
-                #card = list(c.cost.values())
                 card.append(c_dict[c.color])
                 card.append(c.points)
                 cards.append(card)

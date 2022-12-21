@@ -159,18 +159,22 @@ def main():
 
     print_interval = 20
     score = 0.0
+    average_turn = 0
 
     agent = Agent()
 
-    for n_epi in range(100):
+    
+    for n_epi in range(60):
         epsilon = max(0.01, 0.08 - 0.01*(n_epi/200)) #Linear annealing from 8% to 1%
         s = env.reset()
         state_dict = s
         s = state2np(s)
 
         done = False
-        
+        turn = 0
+
         while not done:
+            turn += 1
             a = agent.select_action(torch.from_numpy(s).float(), epsilon, state_dict)
             s_prime, r, done, info = env.step(agent.action[a])
             state_dict = s_prime
@@ -180,19 +184,23 @@ def main():
             s = s_prime
 
             score += r
+            
             if done:
-                print(f"My Cards: {state_dict['player_state'][0]}| My Gems: {state_dict['player_state'][1]} My score: {state_dict['score'][0]}")
+                print(f"My Cards: {state_dict['player_state'][0]}| My Gems: {state_dict['player_state'][1]} My score: {state_dict['score'][0]} Turn to end: {turn}")
+                average_turn += turn
+                turn =  0
                 break
             time.sleep(0.01)
             if agent.memory.size()>2000:
                 agent.train(agent.model, agent.target_model, agent.memory, agent.optimizer)
-        print("Done!")
+        #print("Done!")
         #torch.save(agent.model, "./weight/model.pt")
-        if n_epi%print_interval==0 and n_epi!=0:
-            agent.target_model.load_state_dict(agent.model.state_dict())
-            print("n_episode :{}, score : {:.1f}, n_buffer : {}, eps : {:.1f}%".format(
-                                                            n_epi, score/print_interval, agent.memory.size(), epsilon*100))
-            score = 0.0
+        #if n_epi%print_interval==0 and n_epi!=0:
+            #agent.target_model.load_state_dict(agent.model.state_dict())
+            #print("n_episode :{}, score : {:.1f}, turn: {:.1f}, n_buffer : {}, eps : {:.1f}%".format(
+            #                                                n_epi, score/print_interval, average_turn/print_interval, agent.memory.size(), epsilon*100))
+            #score = 0.0
+            #average_turn = 0
             
     #env.close()
 
