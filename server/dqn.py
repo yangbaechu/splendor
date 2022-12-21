@@ -124,10 +124,22 @@ class Agent():
         
     def select_action(self, obs, epsilon, state_dict):
         out = self.model.forward(obs)
-        possible_action_list = self.filter_action(state_dict)
-        action_num = random.randint(0, len(possible_action_list) - 1)
+        coin = random.random()
 
-        return possible_action_list[action_num]
+        possible_action_list = self.filter_action(state_dict)
+        if coin < epsilon:
+            action_num = random.randint(0, len(possible_action_list) - 1)
+            return possible_action_list[action_num]
+
+        else:
+            #out 중 가능한 값 key, value 추출
+            possible_out = dict()
+            for i in possible_action_list:
+                possible_out[i] = float(out[i])
+            action_num = max(possible_out, key=possible_out.get)
+            return action_num
+
+
 
     def train(self, q, q_target, memory, optimizer):
         for i in range(10):
@@ -165,8 +177,8 @@ def main():
     agent = Agent()
 
     
-    for n_epi in range(200):
-        epsilon = max(0.01, 0.08 - 0.01*(n_epi/200)) #Linear annealing from 8% to 1%
+    for n_epi in range(400):
+        epsilon = max(0.01, 0.4 - 0.1*(n_epi/100)) #Linear annealing from 50% to 1%
         s = env.reset()
         state_dict = s
         s = state2np(s)
