@@ -681,7 +681,7 @@ class Game(object):
         return state
 
     def is_done(self, state_dict):
-        if (state_dict['score'][0] >= 8) or (state_dict['score'][1] >= 15): # 학습을 위해 에피소드를 일찍 끝내기 위해 종료 조건 조정
+        if (state_dict['score'][0] >= 15) or (state_dict['score'][1] >= 15): 
             env_score = [0, 0]
             return True
 
@@ -892,7 +892,7 @@ class Game(object):
         return DUMMY_PLAYER
 
     def next_turn(self):
-        if self.active_player().score() >= 15:
+        if self.active_player().score() >= 22:
             self.last_round()
         self.active_player_index = (self.active_player_index + 1) % self.num_players
         if self.is_last_round and self.active_player_index == 0:
