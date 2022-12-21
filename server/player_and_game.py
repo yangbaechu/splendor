@@ -2,6 +2,7 @@ import random
 import uuid
 import time
 
+random.seed(180)
 
 MAX_PLAYERS = 2
 COLORS = ('b', 'u', 'w', 'g', 'r')
@@ -494,7 +495,7 @@ class Game(object):
 
         for level in LEVELS:
             self.cards[level] = []
-            #shuffle_deck(self.decks[level])
+            shuffle_deck(self.decks[level])
             for card in self.decks[level]:
                 card.level = level
         
@@ -631,7 +632,7 @@ class Game(object):
 
         for level in LEVELS:
             self.cards[level] = []
-            #shuffle_deck(self.decks[level])
+            shuffle_deck(self.decks[level])
             for card in self.decks[level]:
                 card.level = level
         
@@ -692,7 +693,8 @@ class Game(object):
                 #카드 구매 조건 확인
                 card = state_dict['cards'][card_level][card_order]
                 my_gems = state_dict['player_state'][1]
-                if card[0] > my_gems[0] or card[1] > my_gems[1] or card[2] > my_gems[2] or card[3] > my_gems[3] or card[4] > my_gems[4]:
+                my_cards = state_dict['player_state'][0]
+                if card[0] > my_gems[0] + my_cards[0] or card[1] > my_gems[1] + my_cards[1] or card[2] > my_gems[2] + my_cards[2] or card[3] > my_gems[3] +  my_cards[3] or card[4] > my_gems[4] + my_cards[4]:
                     pass
                 else: #하나라도 구매 가능할 시
                     return False

@@ -111,9 +111,9 @@ class Agent():
             #카드 구매 조건 확인
             card = state_dict['cards'][card_level][card_order]
             my_gems = state_dict['player_state'][1]
-
+            my_cards = state_dict['player_state'][0]
             #구매 불가능할 경우 action 다시 선택
-            if card[0] > my_gems[0] or card[1] > my_gems[1] or card[2] > my_gems[2] or card[3] > my_gems[3] or card[4] > my_gems[4]:
+            if card[0] > my_gems[0] + my_cards[0] or card[1] > my_gems[1] + my_cards[1] or card[2] > my_gems[2] + my_cards[2] or card[3] > my_gems[3] +  my_cards[3] or card[4] > my_gems[4] + my_cards[4]:
                 pass
             else:
                 possible_action_list.append(i)
@@ -184,7 +184,7 @@ def main():
                 print(f"My Cards: {state_dict['player_state'][0]}| My Gems: {state_dict['player_state'][1]} My score: {state_dict['score'][0]}")
                 break
             time.sleep(0.01)
-            if agent.memory.size()>2000: #학습 시작 시점 빠르게
+            if agent.memory.size()>2000:
                 agent.train(agent.model, agent.target_model, agent.memory, agent.optimizer)
         print("Done!")
         #torch.save(agent.model, "./weight/model.pt")
