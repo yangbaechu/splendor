@@ -113,7 +113,9 @@ class Agent():
             my_gems = state_dict['player_state'][1]
             my_cards = state_dict['player_state'][0]
             #구매 불가능할 경우 action 다시 선택
-            if card[0] > my_gems[0] + my_cards[0] or card[1] > my_gems[1] + my_cards[1] or card[2] > my_gems[2] + my_cards[2] or card[3] > my_gems[3] +  my_cards[3] or card[4] > my_gems[4] + my_cards[4]:
+            if card == [0 for i in range(7)]:
+                pass
+            elif card[0] > my_gems[0] + my_cards[0] or card[1] > my_gems[1] + my_cards[1] or card[2] > my_gems[2] + my_cards[2] or card[3] > my_gems[3] +  my_cards[3] or card[4] > my_gems[4] + my_cards[4]:
                 pass
             else:
                 possible_action_list.append(i)
@@ -164,7 +166,7 @@ def main():
     agent = Agent()
 
     
-    for n_epi in range(60):
+    for n_epi in range(200):
         epsilon = max(0.01, 0.08 - 0.01*(n_epi/200)) #Linear annealing from 8% to 1%
         s = env.reset()
         state_dict = s
@@ -175,8 +177,8 @@ def main():
 
         while not done:
             turn += 1
-            #print(state_dict)
-            a = agent.select_action(torch.from_numpy(s).float(), epsilon, state_dict)
+            s_tensor = torch.from_numpy(s).float()
+            a = agent.select_action(s_tensor, epsilon, state_dict)
             s_prime, r, done, info = env.step(agent.action[a])
             state_dict = s_prime
             s_prime = state2np(s_prime)
@@ -196,12 +198,12 @@ def main():
                 agent.train(agent.model, agent.target_model, agent.memory, agent.optimizer)
         #print("Done!")
         #torch.save(agent.model, "./weight/model.pt")
-        #if n_epi%print_interval==0 and n_epi!=0:
+        if n_epi%print_interval==0 and n_epi!=0:
             #agent.target_model.load_state_dict(agent.model.state_dict())
-            #print("n_episode :{}, score : {:.1f}, turn: {:.1f}, n_buffer : {}, eps : {:.1f}%".format(
-            #                                                n_epi, score/print_interval, average_turn/print_interval, agent.memory.size(), epsilon*100))
-            #score = 0.0
-            #average_turn = 0
+            print("n_episode :{}, score : {:.1f}, turn: {:.1f}, n_buffer : {}, eps : {:.1f}%".format(
+                                                            n_epi, score/print_interval, average_turn/print_interval, agent.memory.size(), epsilon*100))
+            score = 0.0
+            average_turn = 0
             
     #env.close()
 

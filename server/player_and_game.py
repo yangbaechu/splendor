@@ -93,9 +93,9 @@ class Player(object):
         return self.score()*100 - sum([len(cards) for cards in self.cards.values()])
 
     def buy(self, uuid):
-        if self.acted:
-            print("You've already used your action")
-            return {'error': "You've already used your action"}
+        #if self.acted:
+            #print("You've already used your action")
+            #return {'error': "You've already used your action"}
         #if self.taken:
             #print("You've already taken gems, cheater")
             #return {'error': "You've already taken gems, cheater"}
@@ -698,7 +698,9 @@ class Game(object):
                 card = state_dict['cards'][card_level][card_order]
                 my_gems = state_dict['player_state'][1]
                 my_cards = state_dict['player_state'][0]
-                if card[0] > my_gems[0] + my_cards[0] or card[1] > my_gems[1] + my_cards[1] or card[2] > my_gems[2] + my_cards[2] or card[3] > my_gems[3] +  my_cards[3] or card[4] > my_gems[4] + my_cards[4]:
+                if card == [0 for i in range(7)]:
+                    pass
+                elif card[0] > my_gems[0] + my_cards[0] or card[1] > my_gems[1] + my_cards[1] or card[2] > my_gems[2] + my_cards[2] or card[3] > my_gems[3] +  my_cards[3] or card[4] > my_gems[4] + my_cards[4]:
                     pass
                 else: #하나라도 구매 가능할 시
                     return False
@@ -752,12 +754,18 @@ class Game(object):
         c_dict = {'b': 0, 'u': 1, 'w': 2, 'g':3, 'r':4}
         for level in LEVELS:
             cards = []
-            for c in self.cards[level]:
-                card = [c.cost[key] for key in c_dict.keys()]
-                #card = list(c.cost.values())
-                card.append(c_dict[c.color])
-                card.append(c.points)
-                cards.append(card)
+            for i in range(4):
+                if len(self.cards[level]) >= i + 1:
+                    c = self.cards[level][i]
+                    card = [c.cost[key] for key in c_dict.keys()]
+                    #card = list(c.cost.values())
+                    card.append(c_dict[c.color])
+                    card.append(c.points)
+                    cards.append(card)
+                
+                #남은 카드 없을 경우
+                else:
+                    cards.append([0,0,0,0,0,0,0])
 
             env_cards.append(cards)
         
