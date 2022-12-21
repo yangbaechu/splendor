@@ -35,9 +35,9 @@ class ReplayBuffer():
             s_prime_lst.append(s_prime)
             done_mask_lst.append([done_mask])
 
-        return torch.tensor(s_lst, dtype=torch.float), torch.tensor(a_lst), \
-               torch.tensor(r_lst), torch.tensor(s_prime_lst, dtype=torch.float), \
-               torch.tensor(done_mask_lst)
+        return torch.tensor(np.array(s_lst), dtype=torch.float), torch.tensor(a_lst), \
+               torch.tensor(np.array(r_lst)), torch.tensor(np.array(s_prime_lst), dtype=torch.float), \
+               torch.tensor(np.array(done_mask_lst))
     
     def size(self):
         return len(self.buffer)
@@ -129,10 +129,9 @@ class Agent():
 
         return possible_action_list[action_num]
 
-    def train(q, q_target, memory, optimizer):
+    def train(self, q, q_target, memory, optimizer):
         for i in range(10):
             s,a,r,s_prime,done_mask = memory.sample(batch_size)
-
             q_out = q(s)
             q_a = q_out.gather(1,a)
             max_q_prime = q_target(s_prime).max(1)[0].unsqueeze(1)
@@ -159,7 +158,7 @@ def main():
     GM.start_game()
     env = GM.game
 
-    print_interval = 20
+    print_interval = 10
     score = 0.0
     average_turn = 0
 
@@ -179,6 +178,7 @@ def main():
             turn += 1
             s_tensor = torch.from_numpy(s).float()
             a = agent.select_action(s_tensor, epsilon, state_dict)
+            #print(a)
             s_prime, r, done, info = env.step(agent.action[a])
             state_dict = s_prime
             s_prime = state2np(s_prime)
@@ -189,17 +189,17 @@ def main():
             score += r
             
             if done:
-                print(f"epi {n_epi} My Cards: {state_dict['player_state'][0]}| My Gems: {state_dict['player_state'][1]} My score: {state_dict['score'][0]} Turn to end: {turn}")
+                #print(f"epi {n_epi} My Cards: {state_dict['player_state'][0]}| My Gems: {state_dict['player_state'][1]} My score: {state_dict['score'][0]} Turn to end: {turn}")
                 average_turn += turn
                 turn =  0
                 break
             time.sleep(0.01)
-            if agent.memory.size()>2000:
+            if agent.memory.size()>1000: #train 시험용으로 낮춤
                 agent.train(agent.model, agent.target_model, agent.memory, agent.optimizer)
         #print("Done!")
         #torch.save(agent.model, "./weight/model.pt")
         if n_epi%print_interval==0 and n_epi!=0:
-            #agent.target_model.load_state_dict(agent.model.state_dict())
+            agent.target_model.load_state_dict(agent.model.state_dict())
             print("n_episode :{}, score : {:.1f}, turn: {:.1f}, n_buffer : {}, eps : {:.1f}%".format(
                                                             n_epi, score/print_interval, average_turn/print_interval, agent.memory.size(), epsilon*100))
             score = 0.0

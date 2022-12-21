@@ -908,7 +908,7 @@ class Game(object):
         return DUMMY_PLAYER
 
     def next_turn(self):
-        if self.active_player().score() >= 22:
+        if self.active_player().score() >= 30:
             self.last_round()
         self.active_player_index = (self.active_player_index + 1) % self.num_players
         if self.is_last_round and self.active_player_index == 0:
