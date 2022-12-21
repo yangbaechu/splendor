@@ -181,10 +181,10 @@ def main():
     score_list  = []
     reward_list = []
     turn_list = []
-    EPISODE = 100
+    EPISODE = 500
 
     for n_epi in range(EPISODE):
-        epsilon = max(0.05, 0.5 - 0.1*(n_epi/100)) #Linear annealing from 60% to 5%
+        epsilon = max(0.05, 0.5 - 0.1*(n_epi/100)) #Linear annealing from 50% to 5%
         s = env.reset()
         state_dict = s
         s = state2np(s)
@@ -212,18 +212,18 @@ def main():
                 #print(score)
                 turn =  0
                 break
-            time.sleep(0.01)
-            if agent.memory.size()>100:
-                agent.train(agent.model, agent.target_model, agent.memory, agent.optimizer)
+            #time.sleep(0.01)
+        if agent.memory.size()>200:
+            agent.train(agent.model, agent.target_model, agent.memory, agent.optimizer)
         #print("Done!")
         #torch.save(agent.model, "./weight/model.pt")
         if n_epi%print_interval==0 and n_epi!=0:
             agent.target_model.load_state_dict(agent.model.state_dict())
             print("epi {}, reward : {:.1f}, turn: {:.1f}, score : {}, eps : {:.1f}%".format(
                                                                  n_epi, reward/print_interval, average_turn/print_interval, score/print_interval, epsilon*100))
-            reward_list.append(reward)
-            score_list.append(score)
-            turn_list.append(average_turn)
+            reward_list.append(reward/print_interval)
+            score_list.append(score/print_interval)
+            turn_list.append(average_turn/print_interval)
             
             
             reward = 0
