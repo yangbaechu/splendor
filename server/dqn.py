@@ -47,7 +47,7 @@ class ReplayBuffer():
 class DQN(nn.Module):
     def __init__(self):
         super(DQN, self).__init__()
-        self.fc1 = nn.Linear(121, 256)
+        self.fc1 = nn.Linear(126, 256)
         self.fc2 = nn.Linear(256, 512)
         self.fc3 = nn.Linear(512, 256)
         self.fc4 = nn.Linear(256, 128)
@@ -148,7 +148,7 @@ class Agent():
 
 
     def train(self, q, q_target, memory, optimizer):
-        for i in range(2):
+        for i in range(4):
             s,a,r,s_prime,done_mask = memory.sample(batch_size)
             q_out = q(s)
             q_a = q_out.gather(1,a)
@@ -185,9 +185,10 @@ def main():
     score_list  = []
     reward_list = []
     turn_list = []
+    epsilon_list = []
 
     for n_epi in range(EPISODE):
-        epsilon = max(0.05, 0.5 - 0.1*(n_epi/100))
+        epsilon = max(0.05, 0.5 - 0.1*(n_epi/500))
         s = env.reset()
         state_dict = s
         s = state2np(s)
@@ -212,7 +213,8 @@ def main():
             reward += r
             
             if done:
-                print(f"epi {n_epi} My Cards: {state_dict['player_state'][0]}|My Gems: {state_dict['player_state'][1]} My score: {state_dict['score'][0]} Turn to end: {turn}")
+                if n_epi%20 == 1:
+                    print(f"epi {n_epi} My Cards: {state_dict['player_state'][0]}|My Gems: {state_dict['player_state'][1]} My score: {state_dict['score'][0]} Turn to end: {turn}")
                 average_turn += turn
                 score += state_dict['score'][0]
                 turn =  0
@@ -229,6 +231,7 @@ def main():
             reward_list.append(reward/print_interval)
             score_list.append(score/print_interval)
             turn_list.append(average_turn/print_interval)
+            epsilon_list.append(epsilon)
             
             
             reward = 0
@@ -239,6 +242,7 @@ def main():
     plt.plot(episodes, reward_list, label = 'reward')
     plt.plot(episodes, score_list, label = 'score')
     plt.plot(episodes, turn_list, label = 'turn to end')
+    plt.plot(episodes, epsilon_list, label = 'epsilon')
 
     plt.title('train result')
     plt.xlabel('episode')

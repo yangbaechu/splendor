@@ -631,7 +631,7 @@ class Game(object):
         }
 
         for c in COLORS:
-            self.gems[c] = 4
+            self.gems[c] = 10
 
         for level in LEVELS:
             self.cards[level] = []
@@ -672,8 +672,11 @@ class Game(object):
         opponent = self.active_player()
         opp_cards = [len(opponent.cards[color]) for color in COLORS]
         opp_gems = [opponent.gems[color] for color in COLORS]
+        
+        #남은 보석 수
+        env_gems = [self.gems[c] for c in COLORS]
 
-        env_player_state = [my_cards, my_gems, opp_cards, opp_gems]
+        env_player_state = [my_cards, my_gems, opp_cards, opp_gems, env_gems]
 
         env_score = [player.score(), opponent.score()]
 
@@ -776,9 +779,12 @@ class Game(object):
         opp_cards = [len(opponent.cards[color]) for color in COLORS]
         opp_gems = [opponent.gems[color] for color in COLORS]
 
+        #남은 보석 수
+        env_gems = [self.gems[c] for c in COLORS]
+
         global ori_my_gems
         global ori_my_cards
-        env_player_state = [my_cards, my_gems, opp_cards, opp_gems]
+        env_player_state = [my_cards, my_gems, opp_cards, opp_gems, env_gems]
         
         env_score = [player.score(), opponent.score()]
         
