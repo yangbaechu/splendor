@@ -116,8 +116,6 @@ class Player(object):
             if self.power(c) < card.cost[c]:
                 owed += card.cost[c] - self.power(c)
                 if owed > self.gems['*']:
-                    print(card)
-                    print(self.gems)
                     print("Not enough gems")
                     return {'error': 'Not enough gems'}
 
@@ -183,11 +181,13 @@ class Player(object):
         return {'error': "No such uuid"}
 
     def take(self, color):
-        if self.acted:
-            return {'error': "You've already used your action"}
+        #if self.acted:
+        #    print("You've already used your action")
+        #    return {'error': "You've already used your action"}
         if color not in COLORS:
             return {'error': "That's not a valid color"}
         if not self.game.gems[color]:
+            print("No gems remaining")
             return {'error': "No gems remaining"}
         if len(self.taken) > 2: #작동 X
             return {'error': "Cannot take more than 3 gems"}
@@ -196,6 +196,7 @@ class Player(object):
         if len(self.taken) == 1 and color in self.taken and self.game.gems[color] < 3: #작동
             return {'error': "Cannot take 2 gems from the same pile of less than 4"}
         if self.total_gems() > 9:
+            print("Already have 10 gems")
             return {'error': "Already have 10 gems"}
         self.game.gems[color] -= 1
         self.gems[color] += 1
@@ -497,7 +498,7 @@ class Game(object):
 
         for level in LEVELS:
             self.cards[level] = []
-            shuffle_deck(self.decks[level])
+            #shuffle_deck(self.decks[level])
             for card in self.decks[level]:
                 card.level = level
         
@@ -634,7 +635,7 @@ class Game(object):
 
         for level in LEVELS:
             self.cards[level] = []
-            shuffle_deck(self.decks[level])
+            #shuffle_deck(self.decks[level])
             for card in self.decks[level]:
                 card.level = level
         
@@ -722,24 +723,21 @@ class Game(object):
         #보석 구매
         for i, a in enumerate(action):
             if a>0 and i<5 :
-                reward -= 0.005 
+                #reward -= 0.005 
                 self.take(COLORS[i])
                 if i == 4:
                     break 
 
             #카드 구매
             elif(i==5 and a>0) and a<4 :
-                #print("try to buy card")
                 level = LEVELS[a-1]
                 card_to_buy = self.cards[level][action[6]]
-                #print(f'card_to_buy: {card_to_buy}')
                 reward -= 0.005
                  
                 #정상적 구매를 한 경우
                 if not self.buy(card_to_buy.uuid):
                     reward += 3.0*((15-player.score())/15)
                     reward += card_to_buy.points
-                    #print(f'reward: {reward}')
 
                 break
         
@@ -785,7 +783,6 @@ class Game(object):
         env_score = [player.score(), opponent.score()]
         
         if ori_my_cards!=my_cards or ori_my_gems!=my_gems: 
-            #print(f"My Cards: {my_cards}| My Gems: {my_gems} My score: {env_score[0]}")
             ori_my_cards = my_cards
             ori_my_gems = my_gems
             

@@ -16,6 +16,7 @@ learning_rate = 0.0005
 gamma         = 0.98
 buffer_limit  = 50000
 batch_size    = 8
+EPISODE = 1000
 
 class ReplayBuffer():
     def __init__(self):
@@ -100,8 +101,11 @@ class Agent():
         possible_action_list = []
         
         # 보석 획득하는 경우
-        if sum(state_dict['player_state'][1]) < 9:
+        if sum(state_dict['player_state'][1]) < 8:
             for i in range(15):
+                possible_action_list.append(i)
+        elif sum(state_dict['player_state'][1]) < 9:
+            for i in range(10, 15):
                 possible_action_list.append(i)
 
         # 카드 구매하는 경우
@@ -124,6 +128,7 @@ class Agent():
         return possible_action_list
         
     def select_action(self, obs, epsilon, state_dict):
+
         out = self.model.forward(obs)
         coin = random.random()
 
@@ -155,8 +160,7 @@ class Agent():
             loss.backward()
             optimizer.step()
         
-            
-            
+                        
 def state2np(state_dict):
     new_state = np.array([])
     for state in state_dict.values():
@@ -171,7 +175,7 @@ def main():
     GM.start_game()
     env = GM.game
 
-    print_interval = 10
+    print_interval = 20
     score = 0.0
     reward = 0
     average_turn = 0
@@ -181,21 +185,23 @@ def main():
     score_list  = []
     reward_list = []
     turn_list = []
-    EPISODE = 500
 
     for n_epi in range(EPISODE):
-        epsilon = max(0.05, 0.5 - 0.1*(n_epi/100)) #Linear annealing from 50% to 5%
+        epsilon = max(0.05, 0.5 - 0.1*(n_epi/100))
         s = env.reset()
         state_dict = s
         s = state2np(s)
 
         done = False
         turn = 0
-
         while not done:
             turn += 1
             s_tensor = torch.from_numpy(s).float()
             a = agent.select_action(s_tensor, epsilon, state_dict)
+            if turn > 100:
+                print(state_dict)
+                print(turn)
+                print(f'selected ation: {agent.action[a]}')
             s_prime, r, done, info = env.step(agent.action[a])
             state_dict = s_prime
             s_prime = state2np(s_prime)
@@ -206,21 +212,20 @@ def main():
             reward += r
             
             if done:
-                #print(f"epi {n_epi} My Cards: {state_dict['player_state'][0]}| My Gems: {state_dict['player_state'][1]} My score: {state_dict['score'][0]} Turn to end: {turn}")
+                print(f"epi {n_epi} My Cards: {state_dict['player_state'][0]}|My Gems: {state_dict['player_state'][1]} My score: {state_dict['score'][0]} Turn to end: {turn}")
                 average_turn += turn
                 score += state_dict['score'][0]
-                #print(score)
                 turn =  0
                 break
-            #time.sleep(0.01)
-        if agent.memory.size()>200:
+        if agent.memory.size()>500:
             agent.train(agent.model, agent.target_model, agent.memory, agent.optimizer)
-        #print("Done!")
         #torch.save(agent.model, "./weight/model.pt")
+
         if n_epi%print_interval==0 and n_epi!=0:
             agent.target_model.load_state_dict(agent.model.state_dict())
             print("epi {}, reward : {:.1f}, turn: {:.1f}, score : {}, eps : {:.1f}%".format(
-                                                                 n_epi, reward/print_interval, average_turn/print_interval, score/print_interval, epsilon*100))
+                n_epi, reward/print_interval, average_turn/print_interval, score/print_interval, epsilon*100))
+                 
             reward_list.append(reward/print_interval)
             score_list.append(score/print_interval)
             turn_list.append(average_turn/print_interval)
@@ -230,16 +235,15 @@ def main():
             score = 0
             average_turn = 0
 
-    plt.plot([i for i in range(print_interval, EPISODE, print_interval)], reward_list, label = 'reward')
-    plt.plot([i for i in range(print_interval, EPISODE, print_interval)], score_list, label = 'score')
-    plt.plot([i for i in range(print_interval, EPISODE, print_interval)], turn_list, label = 'turn to end')
+    episodes = [i for i in range(print_interval, EPISODE, print_interval)]
+    plt.plot(episodes, reward_list, label = 'reward')
+    plt.plot(episodes, score_list, label = 'score')
+    plt.plot(episodes, turn_list, label = 'turn to end')
 
     plt.title('train result')
     plt.xlabel('episode')
     plt.legend()
     plt.show()
-            
-    #env.close()
 
 if __name__ == '__main__':
     main()
