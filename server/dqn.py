@@ -16,7 +16,7 @@ learning_rate = 0.0005
 gamma         = 0.98
 buffer_limit  = 50000
 batch_size    = 8
-EPISODE = 1000
+EPISODE = 2
 
 class ReplayBuffer():
     def __init__(self):
@@ -51,7 +51,7 @@ class DQN(nn.Module):
         self.fc2 = nn.Linear(256, 512)
         self.fc3 = nn.Linear(512, 256)
         self.fc4 = nn.Linear(256, 128)
-        self.fc5 = nn.Linear(128, 27)
+        self.fc5 = nn.Linear(128, 29)
 
     def forward(self, x):
         x = F.relu(self.fc1(x))
@@ -73,18 +73,20 @@ class Agent():
                        [1,1,0,0,1, 0,0],
                        [1,0,1,1,0, 0,0],
                        [1,0,1,0,1, 0,0],
-                       [1,0,0,1,1, 0,0],
-                       [0,1,1,1,0, 0,0],
-                       [0,1,1,0,1, 0,0],
-                       [0,1,0,1,1, 0,0],
-                       [0,0,1,1,1, 0,0],
-                       [2,0,0,0,0, 0,0],
+                       [1,0,0,1,1, 0,0],#i=5
+                       [0,1,1,0,0, 0,0],
+                       [0,1,0,1,0, 0,0],
+                       [0,1,0,0,1, 0,0],
+                       [0,0,1,1,0, 0,0],
+                       [0,0,1,0,1, 0,0],
+                       [0,0,0,1,1, 0,0],
+                       [2,0,0,0,0, 0,0],#i=12
                        [0,2,0,0,0, 0,0],
                        [0,0,2,0,0, 0,0],
                        [0,0,0,2,0, 0,0],
                        [0,0,0,0,2, 0,0],
                        
-                       [0,0,0,0,0, 1,0], # i = 15 개발 카드 구매
+                       [0,0,0,0,0, 1,0], # i = 17 개발 카드 구매
                        [0,0,0,0,0, 1,1],
                        [0,0,0,0,0, 1,2],
                        [0,0,0,0,0, 1,3],
@@ -95,21 +97,35 @@ class Agent():
                        [0,0,0,0,0, 3,0],
                        [0,0,0,0,0, 3,1],
                        [0,0,0,0,0, 3,2],
-                       [0,0,0,0,0, 3,3]] # i = 26
+                       [0,0,0,0,0, 3,3]] # i = 28
+
                        
     def filter_action(self, state_dict):
+        def check_avaiable_gems(gem_index):
+            gem_count = state_dict['player_state'][4][gem_index]
+            if gem_count < 2:
+                for action_num in possible_action_list[:]:
+                    if self.action[action_num][gem_index] > gem_count:
+                        possible_action_list.remove(action_num)
+
         possible_action_list = []
         
         # 보석 획득하는 경우
         if sum(state_dict['player_state'][1]) < 8:
-            for i in range(15):
-                possible_action_list.append(i)
-        elif sum(state_dict['player_state'][1]) < 9:
-            for i in range(10, 15):
+            for i in range(0, 17):
                 possible_action_list.append(i)
 
+        elif sum(state_dict['player_state'][1]) < 9:
+            for i in range(12, 17):
+                possible_action_list.append(i)
+            
+        # 가져올 수 있는 보석보다 많이 가져오는 액션 제거
+        for i in range(5):
+            check_avaiable_gems(i)
+
+
         # 카드 구매하는 경우
-        for i in range(15, 27):
+        for i in range(17, 29):
             card_level = self.action[i][-2] - 1
             card_order = self.action[i][-1]
 
@@ -153,11 +169,7 @@ class Agent():
             q_out = q(s)
             q_a = q_out.gather(1,a)
             max_q_prime = q_target(s_prime).max(1)[0].unsqueeze(1)
-            #print(f'q_target_max: {q_target(s_prime).max(1)}')
-            #print(f'max_q_prime: {max_q_prime}')
             target = r + gamma * max_q_prime # * done_mask
-            #print(f'q_a: {q_a}')
-            #print(f'target: {target}')
             loss = F.smooth_l1_loss(q_a, target)
             
             optimizer.zero_grad()
@@ -204,8 +216,8 @@ def main():
             s_tensor = torch.from_numpy(s).float()
             a = agent.select_action(s_tensor, epsilon, state_dict)
             #if turn > 100:
-            print(state_dict)
-            print(turn)
+            print(f"Trun {turn} My Cards: {state_dict['player_state'][0]}|My Gems: {state_dict['player_state'][1]} My score: {state_dict['score'][0]}")
+            print(f"cards: {state_dict['cards'][0]}")
             print(f'selected ation: {agent.action[a]}')
             s_prime, r, done, info = env.step(agent.action[a])
             state_dict = s_prime
@@ -218,7 +230,7 @@ def main():
             
             if done:
                 #if n_epi%20 == 1:
-                print(f"epi {n_epi} My Cards: {state_dict['player_state'][0]}|My Gems: {state_dict['player_state'][1]} My score: {state_dict['score'][0]} Turn to end: {turn}")
+                #print(f"epi {n_epi} My Cards: {state_dict['player_state'][0]}|My Gems: {state_dict['player_state'][1]} My score: {state_dict['score'][0]} Turn to end: {turn}")
                 average_turn += turn
                 score += state_dict['score'][0]
                 turn =  0

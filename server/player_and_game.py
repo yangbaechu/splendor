@@ -634,7 +634,7 @@ class Game(object):
         }
 
         for c in COLORS:
-            self.gems[c] = 10
+            self.gems[c] = 4
 
         for level in LEVELS:
             self.cards[level] = []
@@ -697,7 +697,10 @@ class Game(object):
             return True
 
         if sum(state_dict['player_state'][1]) < 9:
+            print(sum(state_dict['player_state'][1]))
             return False
+        else:
+            print(sum(state_dict['player_state'][1]))
 
         for card_level in range(3): # level
             for card_order in range(4): # order
@@ -708,7 +711,13 @@ class Game(object):
                 if card == [0 for i in range(7)]:
                     pass
                 elif card[0] > my_gems[0] + my_cards[0] or card[1] > my_gems[1] + my_cards[1] or card[2] > my_gems[2] + my_cards[2] or card[3] > my_gems[3] +  my_cards[3] or card[4] > my_gems[4] + my_cards[4]:
-                    pass
+                    if card_level == 0:
+                        #print(card[0], my_gems[0] + my_cards[0])
+                        #print(card[1], my_gems[1] + my_cards[1])
+                        #print(card[2], my_gems[2] + my_cards[2])
+                        #print(card[3], my_gems[3] + my_cards[3])
+                        #print(card[4], my_gems[4] + my_cards[4])
+                        pass
                 else: #하나라도 구매 가능할 시
                     return False
 
@@ -730,11 +739,12 @@ class Game(object):
         #보석 구매
         for i, a in enumerate(action):
             if a>0 and i<5 :
-                if a == 2:
+                if a == 1:
+                    self.take(COLORS[i])
+                elif a == 2:
                     self.take(COLORS[i])
                     self.take(COLORS[i])
                     
-                self.take(COLORS[i])
                 if i == 4:
                     break 
 
@@ -808,7 +818,7 @@ class Game(object):
         done = self.is_done(state)
 
         return state, reward, done, False
-        
+    
     def dict(self, player_id=None):
         if player_id is None:
             player_id = self.active_player_index
