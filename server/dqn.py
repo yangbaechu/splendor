@@ -16,7 +16,7 @@ learning_rate = 0.0005
 gamma         = 0.98
 buffer_limit  = 50000
 batch_size    = 8
-EPISODE = 2
+EPISODE = 20
 
 class ReplayBuffer():
     def __init__(self):
@@ -74,19 +74,17 @@ class Agent():
                        [1,0,1,1,0, 0,0],
                        [1,0,1,0,1, 0,0],
                        [1,0,0,1,1, 0,0],#i=5
-                       [0,1,1,0,0, 0,0],
-                       [0,1,0,1,0, 0,0],
-                       [0,1,0,0,1, 0,0],
-                       [0,0,1,1,0, 0,0],
-                       [0,0,1,0,1, 0,0],
-                       [0,0,0,1,1, 0,0],
-                       [2,0,0,0,0, 0,0],#i=12
+                       [0,1,1,1,0, 0,0],
+                       [0,1,1,0,1, 0,0],
+                       [0,1,0,1,1, 0,0],
+                       [0,0,1,1,1, 0,0],
+                       [2,0,0,0,0, 0,0],#i=10
                        [0,2,0,0,0, 0,0],
                        [0,0,2,0,0, 0,0],
                        [0,0,0,2,0, 0,0],
                        [0,0,0,0,2, 0,0],
                        
-                       [0,0,0,0,0, 1,0], # i = 17 개발 카드 구매
+                       [0,0,0,0,0, 1,0], # i = 15 개발 카드 구매
                        [0,0,0,0,0, 1,1],
                        [0,0,0,0,0, 1,2],
                        [0,0,0,0,0, 1,3],
@@ -97,7 +95,7 @@ class Agent():
                        [0,0,0,0,0, 3,0],
                        [0,0,0,0,0, 3,1],
                        [0,0,0,0,0, 3,2],
-                       [0,0,0,0,0, 3,3]] # i = 28
+                       [0,0,0,0,0, 3,3]] # i = 26
 
                        
     def filter_action(self, state_dict):
@@ -112,11 +110,11 @@ class Agent():
         
         # 보석 획득하는 경우
         if sum(state_dict['player_state'][1]) < 8:
-            for i in range(0, 17):
+            for i in range(0, 15):
                 possible_action_list.append(i)
 
         elif sum(state_dict['player_state'][1]) < 9:
-            for i in range(12, 17):
+            for i in range(10, 15):
                 possible_action_list.append(i)
             
         # 가져올 수 있는 보석보다 많이 가져오는 액션 제거
@@ -125,7 +123,7 @@ class Agent():
 
 
         # 카드 구매하는 경우
-        for i in range(17, 29):
+        for i in range(15, 27):
             card_level = self.action[i][-2] - 1
             card_order = self.action[i][-1]
 
@@ -215,11 +213,11 @@ def main():
             turn += 1
             s_tensor = torch.from_numpy(s).float()
             a = agent.select_action(s_tensor, epsilon, state_dict)
-            #if turn > 100:
             print(f"Trun {turn} My Cards: {state_dict['player_state'][0]}|My Gems: {state_dict['player_state'][1]} My score: {state_dict['score'][0]}")
             print(f"cards: {state_dict['cards'][0]}")
-            print(f'selected ation: {agent.action[a]}')
+            print(f'selected action: {agent.action[a]}')
             s_prime, r, done, info = env.step(agent.action[a])
+            print(f'reward: {r}')
             state_dict = s_prime
             s_prime = state2np(s_prime)
             done_mask = 0.0 if done else 1.0

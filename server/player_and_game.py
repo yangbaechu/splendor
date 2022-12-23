@@ -689,21 +689,35 @@ class Game(object):
                  "score": env_score
                  }
 
-        return state
+        return state 
 
     def is_done(self, state_dict):
-        if (state_dict['score'][0] >= 15) or (state_dict['score'][1] >= 15): 
-            env_score = [0, 0]
-            return True
+            if (state_dict['score'][0] >= 15) or (state_dict['score'][1] >= 15): 
+                return True
 
-        if sum(state_dict['player_state'][1]) < 9:
-            print(sum(state_dict['player_state'][1]))
-            return False
-        else:
-            print(sum(state_dict['player_state'][1]))
+            if sum(state_dict['player_state'][1]) < 9:
+                return False
 
-        for card_level in range(3): # level
-            for card_order in range(4): # order
+            for card_level in range(3): # level
+                for card_order in range(4): # order
+                    #카드 구매 조건 확인
+                    card = state_dict['cards'][card_level][card_order]
+                    my_gems = state_dict['player_state'][1]
+                    my_cards = state_dict['player_state'][0]
+                    if card == [0 for i in range(7)]:
+                        pass
+                    elif card[0] > my_gems[0] + my_cards[0] or card[1] > my_gems[1] + my_cards[1] or card[2] > my_gems[2] + my_cards[2] or card[3] > my_gems[3] +  my_cards[3] or card[4] > my_gems[4] + my_cards[4]:
+                        pass
+                    else: #하나라도 구매 가능할 시
+                        return False
+
+                    #구매 가능한 카드 없을 시
+                    if card_level == 2 and card_order == 3:
+                        return True
+
+    def  check_available_card(self, state_dict):
+        for card_level in range(3): 
+            for card_order in range(4): 
                 #카드 구매 조건 확인
                 card = state_dict['cards'][card_level][card_order]
                 my_gems = state_dict['player_state'][1]
@@ -711,31 +725,23 @@ class Game(object):
                 if card == [0 for i in range(7)]:
                     pass
                 elif card[0] > my_gems[0] + my_cards[0] or card[1] > my_gems[1] + my_cards[1] or card[2] > my_gems[2] + my_cards[2] or card[3] > my_gems[3] +  my_cards[3] or card[4] > my_gems[4] + my_cards[4]:
-                    if card_level == 0:
-                        #print(card[0], my_gems[0] + my_cards[0])
-                        #print(card[1], my_gems[1] + my_cards[1])
-                        #print(card[2], my_gems[2] + my_cards[2])
-                        #print(card[3], my_gems[3] + my_cards[3])
-                        #print(card[4], my_gems[4] + my_cards[4])
-                        pass
+                    pass
                 else: #하나라도 구매 가능할 시
-                    return False
-
-                #구매 가능한 카드 없을 시
-                if card_level == 2 and card_order == 3:
-                    print("there is no cards to buy!")
-                    return True
+                    return 0
                 
+                # 구매 가능 카드 없을 때
+                if card_level == 2 and card_order == 3:
+                    return -5
 
     #a는s [가져올 보석 개수, 구매할 카드 행/렬]
     #카드 열 번호는 왼쪽부터 0, 1, ...
     def step(self, action): 
-        
+
         reward=0
         done = False
         player = self.active_player()
         reward -= 0.05 
-
+        
         #보석 구매
         for i, a in enumerate(action):
             if a>0 and i<5 :
@@ -755,7 +761,7 @@ class Game(object):
                  
                 #정상적 구매를 한 경우
                 if not self.buy(card_to_buy.uuid):
-                    reward += 3.0*((15-player.score())/15)
+                    reward += (15-player.score())/15
                     reward += card_to_buy.points
 
                 break
@@ -765,6 +771,7 @@ class Game(object):
         
         #귀족카드 가져갔을 때 shape 맞추기
         for i in range(3 - len(self.nobles)):
+            reward += 3
             env_nobles.append([0,0,0,0,0])
 
         env_cards = []
@@ -816,6 +823,9 @@ class Game(object):
                  }
 
         done = self.is_done(state)
+
+        if done:
+            reward += self.check_available_card(state)
 
         return state, reward, done, False
     
