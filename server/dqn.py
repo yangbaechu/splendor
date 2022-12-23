@@ -153,7 +153,11 @@ class Agent():
             q_out = q(s)
             q_a = q_out.gather(1,a)
             max_q_prime = q_target(s_prime).max(1)[0].unsqueeze(1)
-            target = r + gamma * max_q_prime * done_mask
+            #print(f'q_target_max: {q_target(s_prime).max(1)}')
+            #print(f'max_q_prime: {max_q_prime}')
+            target = r + gamma * max_q_prime # * done_mask
+            #print(f'q_a: {q_a}')
+            #print(f'target: {target}')
             loss = F.smooth_l1_loss(q_a, target)
             
             optimizer.zero_grad()
@@ -188,7 +192,7 @@ def main():
     epsilon_list = []
 
     for n_epi in range(EPISODE):
-        epsilon = max(0.05, 0.5 - 0.1*(n_epi/500))
+        epsilon = max(0.05, 0.5 - 0.1*(n_epi/100))
         s = env.reset()
         state_dict = s
         s = state2np(s)
@@ -199,10 +203,10 @@ def main():
             turn += 1
             s_tensor = torch.from_numpy(s).float()
             a = agent.select_action(s_tensor, epsilon, state_dict)
-            if turn > 100:
-                print(state_dict)
-                print(turn)
-                print(f'selected ation: {agent.action[a]}')
+            #if turn > 100:
+            print(state_dict)
+            print(turn)
+            print(f'selected ation: {agent.action[a]}')
             s_prime, r, done, info = env.step(agent.action[a])
             state_dict = s_prime
             s_prime = state2np(s_prime)
@@ -213,8 +217,8 @@ def main():
             reward += r
             
             if done:
-                if n_epi%20 == 1:
-                    print(f"epi {n_epi} My Cards: {state_dict['player_state'][0]}|My Gems: {state_dict['player_state'][1]} My score: {state_dict['score'][0]} Turn to end: {turn}")
+                #if n_epi%20 == 1:
+                print(f"epi {n_epi} My Cards: {state_dict['player_state'][0]}|My Gems: {state_dict['player_state'][1]} My score: {state_dict['score'][0]} Turn to end: {turn}")
                 average_turn += turn
                 score += state_dict['score'][0]
                 turn =  0
@@ -231,7 +235,7 @@ def main():
             reward_list.append(reward/print_interval)
             score_list.append(score/print_interval)
             turn_list.append(average_turn/print_interval)
-            epsilon_list.append(epsilon)
+            epsilon_list.append(epsilon*100)
             
             
             reward = 0

@@ -110,6 +110,7 @@ class Player(object):
                     found_level = level
                     break
         if not card:
+            print("No such uuid")
             return {'error': "No such uuid"}
 
         for c in COLORS:
@@ -189,12 +190,14 @@ class Player(object):
         if not self.game.gems[color]:
             print("No gems remaining")
             return {'error': "No gems remaining"}
-        if len(self.taken) > 2: #작동 X
-            return {'error': "Cannot take more than 3 gems"}
-        if len(self.taken) > 1 and color in self.taken: #작동 X
-            return {'error': "Cannot take the same color on the 3rd gem"}
-        if len(self.taken) == 1 and color in self.taken and self.game.gems[color] < 3: #작동
-            return {'error': "Cannot take 2 gems from the same pile of less than 4"}
+        #if len(self.taken) > 2: #작동 X
+            #return {'error': "Cannot take more than 3 gems"}
+        #if len(self.taken) > 1 and color in self.taken: #작동 X
+            #print("Cannot take the same color on the 3rd gem")
+            #return {'error': "Cannot take the same color on the 3rd gem"}
+        #if len(self.taken) == 1 and color in self.taken and self.game.gems[color] < 3: #작동
+            #print("Cannot take 2 gems from the same pile of less than 4")
+            #return {'error': "Cannot take 2 gems from the same pile of less than 4"}
         if self.total_gems() > 9:
             print("Already have 10 gems")
             return {'error': "Already have 10 gems"}
@@ -711,7 +714,7 @@ class Game(object):
 
                 #구매 가능한 카드 없을 시
                 if card_level == 2 and card_order == 3:
-                    env_score = [0, 0]
+                    print("there is no cards to buy!")
                     return True
                 
 
@@ -722,11 +725,15 @@ class Game(object):
         reward=0
         done = False
         player = self.active_player()
+        reward -= 0.05 
 
         #보석 구매
         for i, a in enumerate(action):
             if a>0 and i<5 :
-                #reward -= 0.005 
+                if a == 2:
+                    self.take(COLORS[i])
+                    self.take(COLORS[i])
+                    
                 self.take(COLORS[i])
                 if i == 4:
                     break 
@@ -735,7 +742,6 @@ class Game(object):
             elif(i==5 and a>0) and a<4 :
                 level = LEVELS[a-1]
                 card_to_buy = self.cards[level][action[6]]
-                reward -= 0.005
                  
                 #정상적 구매를 한 경우
                 if not self.buy(card_to_buy.uuid):
