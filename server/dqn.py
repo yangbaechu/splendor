@@ -12,12 +12,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 #Hyperparameters
-learning_rate = 0.0005
-gamma         = 0.98
-buffer_limit  = 50000
+learning_rate = 0.0002
+gamma         = 0.9
+buffer_limit  = 10000
 batch_size    = 8
-EPISODE = 600
-print_interval = 20
+EPISODE = 4000
+print_interval = 50
 
 class ReplayBuffer():
     def __init__(self):
@@ -166,8 +166,8 @@ class Agent():
         for i in range(10):
             s,a,r,s_prime,done_mask = memory.sample(batch_size)
             q_out = q(s)
-            q_a = q_out.gather(1,a)
-            max_q_prime = q_target(s_prime).max(1)[0].unsqueeze(1)
+            q_a = q_out.gather(1,a) #모델이 예측한 a의 Q value
+            max_q_prime = q_target(s_prime).max(1)[0].unsqueeze(1) #다음 상황에서의 max Q value
             target = r + gamma * max_q_prime  * done_mask
             loss = F.smooth_l1_loss(q_a, target)
             
@@ -202,7 +202,7 @@ def main():
     epsilon_list = []
 
     for n_epi in range(EPISODE):
-        epsilon = max(0.05, 0.5 - 0.1*(n_epi/100))
+        epsilon = max(0.02, 0.2 - 0.02*(n_epi/100))
         s = env.reset()
         state_dict = s
         s = state2np(s)
@@ -239,8 +239,8 @@ def main():
 
         if n_epi%print_interval==0 and n_epi!=0:
             agent.target_model.load_state_dict(agent.model.state_dict())
-            print("epi {}, reward : {:.1f}, turn: {:.1f}, score : {}, eps : {:.1f}%".format(
-                n_epi, reward/print_interval, average_turn/print_interval, score/print_interval, epsilon*100))
+            print("epi {}, reward : {:.1f}, turn: {:.1f}, score : {}, eps : {:.1f}%, buffer: {}".format(
+                n_epi, reward/print_interval, average_turn/print_interval, score/print_interval, epsilon*100, agent.memory.size()))
                  
             reward_list.append(reward/print_interval)
             score_list.append(score/print_interval)
@@ -253,10 +253,10 @@ def main():
             average_turn = 0
 
     episodes = [i for i in range(print_interval, EPISODE, print_interval)]
-    plt.plot(episodes, reward_list, label = 'reward')
+    #plt.plot(episodes, reward_list, label = 'reward')
     plt.plot(episodes, score_list, label = 'score')
-    plt.plot(episodes, turn_list, label = 'turn to end')
-    plt.plot(episodes, epsilon_list, label = 'epsilon')
+    #plt.plot(episodes, turn_list, label = 'turn to end')
+    #plt.plot(episodes, epsilon_list, label = 'epsilon')
 
     plt.title('train result')
     plt.xlabel('episode')

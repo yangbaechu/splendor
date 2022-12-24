@@ -479,7 +479,7 @@ class Game(object):
             Noble(8, 3, 3, 3, 3, 0, 0),
             Noble(9, 3, 3, 0, 0, 3, 3),
         ]
-        shuffle_deck(self.noble_pool)
+        #shuffle_deck(self.noble_pool)
         self.nobles = self.noble_pool[:3]
 
         self.num_players = 0
@@ -620,7 +620,7 @@ class Game(object):
             Noble(8, 3, 3, 3, 3, 0, 0),
             Noble(9, 3, 3, 0, 0, 3, 3),
         ]
-        shuffle_deck(self.noble_pool)
+        #shuffle_deck(self.noble_pool)
         self.nobles = self.noble_pool[:3]
         self.logs = []
         self.winner = None
@@ -740,7 +740,6 @@ class Game(object):
         reward=0
         done = False
         player = self.active_player()
-        reward -= 0.05 
         
         #보석 구매
         for i, a in enumerate(action):
