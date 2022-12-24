@@ -16,7 +16,8 @@ learning_rate = 0.0005
 gamma         = 0.98
 buffer_limit  = 50000
 batch_size    = 8
-EPISODE = 20
+EPISODE = 600
+print_interval = 20
 
 class ReplayBuffer():
     def __init__(self):
@@ -162,12 +163,12 @@ class Agent():
 
 
     def train(self, q, q_target, memory, optimizer):
-        for i in range(4):
+        for i in range(10):
             s,a,r,s_prime,done_mask = memory.sample(batch_size)
             q_out = q(s)
             q_a = q_out.gather(1,a)
             max_q_prime = q_target(s_prime).max(1)[0].unsqueeze(1)
-            target = r + gamma * max_q_prime # * done_mask
+            target = r + gamma * max_q_prime  * done_mask
             loss = F.smooth_l1_loss(q_a, target)
             
             optimizer.zero_grad()
@@ -189,7 +190,6 @@ def main():
     GM.start_game()
     env = GM.game
 
-    print_interval = 20
     score = 0.0
     reward = 0
     average_turn = 0
@@ -213,11 +213,10 @@ def main():
             turn += 1
             s_tensor = torch.from_numpy(s).float()
             a = agent.select_action(s_tensor, epsilon, state_dict)
-            print(f"Trun {turn} My Cards: {state_dict['player_state'][0]}|My Gems: {state_dict['player_state'][1]} My score: {state_dict['score'][0]}")
-            print(f"cards: {state_dict['cards'][0]}")
-            print(f'selected action: {agent.action[a]}')
+            #print(f"Trun {turn} My Cards: {state_dict['player_state'][0]}|My Gems: {state_dict['player_state'][1]} My score: {state_dict['score'][0]}")
+            #print(f"cards: {state_dict['cards'][0]}")
+            #print(f'selected action: {agent.action[a]}')
             s_prime, r, done, info = env.step(agent.action[a])
-            print(f'reward: {r}')
             state_dict = s_prime
             s_prime = state2np(s_prime)
             done_mask = 0.0 if done else 1.0
@@ -225,6 +224,7 @@ def main():
             s = s_prime
 
             reward += r
+            #print(f'reward: {reward}')
             
             if done:
                 #if n_epi%20 == 1:
@@ -233,7 +233,7 @@ def main():
                 score += state_dict['score'][0]
                 turn =  0
                 break
-        if agent.memory.size()>500:
+        if agent.memory.size()>1000:
             agent.train(agent.model, agent.target_model, agent.memory, agent.optimizer)
         #torch.save(agent.model, "./weight/model.pt")
 
